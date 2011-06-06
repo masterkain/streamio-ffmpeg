@@ -1,14 +1,14 @@
 require 'spec_helper.rb'
 
 module FFMPEG
-  
+
   describe Movie do
     describe "given a non existing file" do
       it "should throw ArgumentError" do
         lambda { Movie.new("i_dont_exist") }.should raise_error(Errno::ENOENT, /does not exist/)
       end
     end
-    
+
     describe "parsing" do
       describe "given a non movie file" do
         before(:all) do
@@ -19,22 +19,22 @@ module FFMPEG
           @movie.should_not be_valid
         end
       end
-      
+
       describe "given a mp3 file" do
         before(:all) do
           @movie = Movie.new("#{fixture_path}/sounds/napoleon.mp3")
         end
-        
+
         it "should have uncertain duration" do
           @movie.should be_uncertain_duration
         end
       end
-      
+
       describe "a broken mp4 file" do
         before(:all) do
           @movie = Movie.new("#{fixture_path}/movies/broken.mp4")
         end
-        
+
         it "should not be valid" do
           @movie.should_not be_valid
         end
@@ -48,11 +48,11 @@ module FFMPEG
         before(:all) do
           @movie = Movie.new("#{fixture_path}/movies/weird_aspect.small.mpg")
         end
-        
+
         it "should parse the DAR" do
           @movie.dar.should == "704:405"
         end
-        
+
         it "should have correct calculated_aspect_ratio" do
           @movie.calculated_aspect_ratio.to_s[0..15].should == "1.73827160493827" # substringed to be 1.9 compatible
         end
@@ -64,12 +64,12 @@ module FFMPEG
           Open3.stub!(:popen3).and_return([nil,nil,fake_output])
           @movie = Movie.new(__FILE__)
         end
-        
+
         it "should have an uncertain duration" do
           @movie.should be_uncertain_duration
         end
       end
-      
+
       describe "given a file with ISO-8859-1 characters in output" do
         it "should not crash" do
           fake_output = StringIO.new(File.read("#{fixture_path}/outputs/file_with_iso-8859-1.txt"))
@@ -77,31 +77,62 @@ module FFMPEG
           expect { Movie.new(__FILE__) }.to_not raise_error
         end
       end
-      
+
       describe "given a file with 5.1 audio" do
         before(:each) do
           fake_output = StringIO.new(File.read("#{fixture_path}/outputs/file_with_surround_sound.txt"))
           Open3.stub!(:popen3).and_return([nil,nil,fake_output])
           @movie = Movie.new(__FILE__)
         end
-        
+
         it "should have 6 audio channels" do
           @movie.audio_channels.should == 6
         end
       end
-      
+
       describe "given a file with no audio" do
         before(:each) do
           fake_output = StringIO.new(File.read("#{fixture_path}/outputs/file_with_no_audio.txt"))
           Open3.stub!(:popen3).and_return([nil,nil,fake_output])
           @movie = Movie.new(__FILE__)
         end
-        
+
         it "should have nil audio channels" do
           @movie.audio_channels.should == nil
         end
       end
-      
+
+      describe "given an mp4 audio file" do
+        before(:all) do
+          @movie = Movie.new("#{fixture_path}/movies/raise_the_dead.m4a")
+        end
+
+        it "should know the title" do
+          @movie.title.should == "Raise The Dead M4A"
+        end
+
+        it "should know the artist" do
+          @movie.artist.should == "Vemoth"
+        end
+
+        it "should know the album" do
+          @movie.album.should == "The Upcoming End"
+        end
+
+        it "should know the genre" do
+          @movie.genre.should == "Black Metal"
+        end
+
+        it "should know the track" do
+          @movie.number.should == "1"
+        end
+
+        it "should know the date" do
+          @movie.date.should == "2008"
+        end
+
+      end
+
       describe "given an awesome movie file" do
         before(:all) do
           @movie = Movie.new("#{fixture_path}/movies/awesome movie.mov")
@@ -110,7 +141,7 @@ module FFMPEG
         it "should have uncertain duration (all movies are considered uncertain these days)" do
           @movie.should be_uncertain_duration
         end
-        
+
         it "should remember the movie path" do
           @movie.path.should == "#{fixture_path}/movies/awesome movie.mov"
         end
@@ -122,7 +153,7 @@ module FFMPEG
         it "should parse the bitrate" do
           @movie.bitrate.should == 481
         end
-
+        
         it "should parse video stream information" do
           @movie.video_stream.should == "h264, yuv420p, 640x480 [PAR 1:1 DAR 4:3], 371 kb/s, 16.75 fps, 15 tbr, 600 tbn, 1200 tbc"
         end
@@ -175,17 +206,17 @@ module FFMPEG
         it "should should be valid" do
           @movie.should be_valid
         end
-        
+
         it "should calculate the aspect ratio" do
           @movie.calculated_aspect_ratio.to_s[0..15].should == "1.33333333333333" # substringed to be 1.9 compatible
         end
-        
+
         it "should know the file size" do
           @movie.size.should == 455546
         end
       end
     end
-    
+
     describe "transcode" do
       it "should run the transcoder" do
         movie = Movie.new("#{fixture_path}/movies/awesome movie.mov")
@@ -198,5 +229,5 @@ module FFMPEG
       end
     end
   end
-  
+
 end
