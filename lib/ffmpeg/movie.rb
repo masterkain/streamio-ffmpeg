@@ -30,7 +30,7 @@ module FFMPEG
       output[/(TDRC|date)\s+:.(.*)/]
       @date = $2 ? $2.to_s : nil
 
-      output[/(TRCK|track)\s+:.(.*)/]
+      output[/(TRCK|track)\s+\:\s([\d]+)/]
       @number = $2 ? $2.to_s : nil
 
       output[/Duration: (\d{2}):(\d{2}):(\d{2}\.\d{1})/]
