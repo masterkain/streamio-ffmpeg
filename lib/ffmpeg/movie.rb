@@ -4,6 +4,7 @@ module FFMPEG
     attr_reader :video_stream, :video_codec, :video_bitrate, :colorspace, :resolution, :dar
     attr_reader :audio_stream, :audio_codec, :audio_bitrate, :audio_sample_rate
     attr_reader :title, :artist, :album, :genre, :date, :number
+    attr_reader :raw_output
 
     def initialize(path)
       raise Errno::ENOENT, "the file '#{path}' does not exist" unless File.exists?(path)
@@ -14,6 +15,8 @@ module FFMPEG
       output = stderr.read
 
       fix_encoding(output)
+
+      @raw_output = output
 
       output[/(TIT2|title)\s+:.(.*)/]
       @title = $2 ? $2.to_s : nil
